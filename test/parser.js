@@ -92,4 +92,24 @@ describe('Parser', function () {
 
     parser.end(line)
   })
+
+  it('should emit invalid lines', function (done) {
+    var parser = jsonlines.parse({ emitInvalidLines: true })
+    var data = '"works"\nbroken\n"ok"'
+
+    parser.once('data', function (data) {
+      assert.equal(data, 'works')
+
+      parser.once('invalid-line', function (err) {
+        assert.equal(err.source, 'broken')
+
+        parser.once('data', function (data) {
+          assert.equal(data, 'ok')
+          done()
+        })
+      })
+    })
+
+    parser.end(data)
+  })
 })

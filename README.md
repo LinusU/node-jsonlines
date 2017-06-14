@@ -40,12 +40,48 @@ stringifier.end()
 
 ## API
 
-### `.parse()`
+### `.parse([options])`
 
 Returns a transform stream that turns newline separated json into a stream of
 javascript values.
+
+`options` is an optional object with the keys documented below.
 
 ### `.stringify()`
 
 Returns a transform stream that turns javascript values into a stream of newline
 separated json.
+
+## Options
+
+### `emitInvalidLine`
+
+If true, instead of emitting an error and cancelling the stream when an invalid line is proccessed, an `invalid-line` event is emitted with the same error. This is very useful when processing text that have mixed plain text and json data.
+
+Example:
+
+```js
+var jsonlines = require('jsonlines')
+var parser = jsonlines.parse({ emitInvalidLines: true })
+
+parser.on('data', function (data) {
+  console.log('Got json:', data)
+})
+
+parser.on('invalid-line', function (err) {
+  console.log('Got text:', err.source)
+})
+
+parser.write('{ "test": "This is a test!" }\n')
+parser.write('This is some plain text\n')
+parser.write('{ "jsonlines": "is awesome" }')
+parser.end()
+```
+
+Output:
+
+```text
+Got json: { test: 'This is a test!' }
+Got text: This is some plain text
+Got json: { jsonlines: 'is awesome' }
+```
